@@ -20,6 +20,11 @@
 			display: inline;
 		}
 
+		.swipe .paging > li > a.focus {
+			font-weight: bold;
+		}
+
+
 		.swipe-viewport {
 			overflow: hidden;
 			visibility: hidden;
@@ -39,6 +44,24 @@
 
 		/* END required styles */
 
+		.swipe-panels > div.selected > b{
+
+		}
+
+		.swipe-panels > div > b {
+			display: block;
+			font-weight: bold;
+			color: #14ADE5;
+			font-size: 20px;
+			text-align: center;
+			margin: 10px;
+			padding: 100px 10px;
+			box-shadow: 0 1px #EBEBEB;
+			background: #fff;
+			border-radius: 3px;
+			border: 1px solid;
+			border-color: #E5E5E5 #D3D3D3 #B9C1C6;
+		}
 	</style>
 
 </head>
@@ -47,544 +70,43 @@
 <div id='mySwipe' style='max-width:500px;margin:0 auto' class="swipe">
 	<div class='swipe-viewport'>
 		<div class='swipe-panels'>
-			<div><b>0</b></div>
-			<div><b>1</b></div>
-			<div><b>2</b></div>
-			<div><b>3</b></div>
-			<div><b>4</b></div>
-			<div><b>5</b></div>
-			<div><b>6</b></div>
-			<div><b>7</b></div>
-			<div><b>8</b></div>
-			<div><b>9</b></div>
-			<div><b>10</b></div>
-			<div><b>11</b></div>
-			<div><b>12</b></div>
-			<div><b>13</b></div>
-			<div><b>14</b></div>
-			<div><b>15</b></div>
-			<div><b>16</b></div>
-			<div><b>17</b></div>
-			<div><b>18</b></div>
-			<div><b>19</b></div>
-			<div><b>20</b></div>
+			<div>
+				<b><a href="#">0</a>
+
+					<form action="">
+						<legend>Focus test</legend>
+					<input type="radio" value="1" name="focustest" checked/>
+					<input type="radio" value="2" name="focustest"/>
+					<input type="radio" value="3" name="focustest"/>
+						<input type="text"/> <input type="submit"/>
+					</form>
+				</b>
+			</div>
+			<div><b><a href="#">1</a></b></b></div>
+			<div><b><a href="#">2</a></b></div>
+			<div><b><a href="#">3</a></b></div>
+			<div><b><a href="#">4</a></b></div>
+			<div><b><a href="#">5</a></b></div>
+			<div><b><a href="#">6</a></b></div>
+			<div><b><a href="#">7</a></b></div>
+			<div><b><a href="#">8</a></b></div>
+			<div><b><a href="#">9</a></b></div>
+			<div><b><a href="#">10</a></b></div>
+			<div><b><a href="#">11</a></b></div>
+			<div><b><a href="#">12</a></b></div>
+			<div><b><a href="#">13</a></b></div>
+			<div><b><a href="#">14</a></b></div>
+			<div><b><a href="#">15</a></b></div>
+			<div><b><a href="#">16</a></b></div>
+			<div><b><a href="#">17</a></b></div>
+			<div><b><a href="#">18</a></b></div>
+			<div><b><a href="#">19</a></b></div>
+			<div><b><a href="#">20</a></b></div>
 		</div>
 	</div>
 </div>
+<a href="http://lipsum.com">Link</a>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script src='swipe.js'></script>
 <script src='swipetabpanel.js'></script>
-<script>
-
-$(document).ready(function () {
-
-	var panel1 = new tabpanel("tabpanel1", false);
-	//var panel2 = new tabpanel("accordian1", true);
-});
-
-//
-// keyCodes() is an object to contain keycodes needed for the application
-//
-function keyCodes() {
-	// Define values for keycodes
-	this.tab = 9;
-	this.enter = 13;
-	this.esc = 27;
-
-	this.space = 32;
-	this.pageup = 33;
-	this.pagedown = 34;
-	this.end = 35;
-	this.home = 36;
-
-	this.left = 37;
-	this.up = 38;
-	this.right = 39;
-	this.down = 40;
-
-} // end keyCodes
-
-function tabpanel(id, accordian) {
-
-	// define the class properties
-
-	this.panel_id = id; // store the id of the containing div
-	this.accordian = accordian; // true if this is an accordian control
-	this.$panel = $('#' + id);  // store the jQuery object for the panel
-	this.keys = new keyCodes(); // keycodes needed for event handlers
-	this.$tabs = this.$panel.find('.tab'); // Array of panel tabs.
-	this.$panels = this.$panel.children('.panel'); // Array of panel.
-
-	// Bind event handlers
-	this.bindHandlers();
-
-	// Initialize the tab panel
-	this.init();
-
-} // end tabpanel() constructor
-
-tabpanel.prototype.init = function () {
-	var $tab; // the selected tab - if one is selected
-
-	// add aria attributes to the panel container
-	this.$panel.attr('aria-multiselectable', this.accordian);
-
-	// add aria attributes to the panels
-	this.$panels.attr('aria-hidden', 'true');
-
-	// hide all the panels
-	this.$panels.hide();
-
-	// get the selected tab
-	$tab = this.$tabs.filter('.selected');
-
-	if ($tab == undefined) {
-		$tab = this.$tabs.first();
-		$tab.addClass('selected');
-	}
-
-	// show the panel that the selected tab controls and set aria-hidden to false
-	this.$panel.find('#' + $tab.attr('aria-controls')).show().attr('aria-hidden', 'false');
-
-} // end init()
-
-tabpanel.prototype.switchTabs = function ($curTab, $newTab) {
-
-	// Remove the highlighting from the current tab
-	$curTab.removeClass('selected');
-	$curTab.removeClass('focus');
-
-	// remove tab from the tab order
-	$curTab.attr('tabindex', '-1');
-
-	// update the aria attributes
-
-	// Highlight the new tab
-	$newTab.addClass('selected');
-
-	// If this is a tab panel, swap displayed tabs
-	if (this.accordian == false) {
-		// hide the current tab panel and set aria-hidden to true
-		this.$panel.find('#' + $curTab.attr('aria-controls')).hide().attr('aria-hidden', 'true');
-
-		// show the new tab panel and set aria-hidden to false
-		this.$panel.find('#' + $newTab.attr('aria-controls')).show().attr('aria-hidden', 'false');
-	}
-
-	// Make new tab navigable
-	$newTab.attr('tabindex', '0');
-
-	// give the new tab focus
-	$newTab.focus();
-
-} // end switchTabs()
-
-tabpanel.prototype.togglePanel = function ($tab) {
-
-	$panel = this.$panel.find('#' + $tab.attr('aria-controls'));
-
-	if ($panel.attr('aria-hidden') == 'true') {
-		$panel.slideDown(100);
-		$panel.attr('aria-hidden', 'false');
-	}
-	else {
-		$panel.slideUp(100);
-		$panel.attr('aria-hidden', 'true');
-	}
-} // end togglePanel()
-
-
-tabpanel.prototype.bindHandlers = function () {
-
-	var thisObj = this; // Store the this pointer for reference
-
-	//////////////////////////////
-	// Bind handlers for the tabs / accordian headers
-
-	// bind a tab keydown handler
-	this.$tabs.keydown(function (e) {
-		return thisObj.handleTabKeyDown($(this), e);
-	});
-
-	// bind a tab keypress handler
-	this.$tabs.keypress(function (e) {
-		return thisObj.handleTabKeyPress($(this), e);
-	});
-
-	// bind a tab click handler
-	this.$tabs.click(function (e) {
-		return thisObj.handleTabClick($(this), e);
-	});
-
-	// bind a tab focus handler
-	this.$tabs.focus(function (e) {
-		return thisObj.handleTabFocus($(this), e);
-	});
-
-	// bind a tab blur handler
-	this.$tabs.blur(function (e) {
-		return thisObj.handleTabBlur($(this), e);
-	});
-
-	/////////////////////////////
-	// Bind handlers for the panels
-
-	// bind a keydown handlers for the panel focusable elements
-	this.$panels.keydown(function (e) {
-		return thisObj.handlePanelKeyDown($(this), e);
-	});
-
-	// bind a keypress handler for the panel
-	this.$panels.keypress(function (e) {
-		return thisObj.handlePanelKeyPress($(this), e);
-	});
-
-} // end bindHandlers()
-
-tabpanel.prototype.handleTabKeyDown = function ($tab, e) {
-
-	if (e.altKey) {
-		// do nothing
-		return true;
-	}
-
-	switch (e.keyCode) {
-		case this.keys.enter:
-		case this.keys.space:
-		{
-
-			// Only process if this is an accordian widget
-			if (this.accordian == true) {
-				// display or collapse the panel
-				this.togglePanel($tab);
-
-				e.stopPropagation();
-				return false;
-			}
-
-			return true;
-		}
-		case this.keys.left:
-		case this.keys.up:
-		{
-
-			var thisObj = this;
-			var $prevTab; // holds jQuery object of tab from previous pass
-			var $newTab; // the new tab to switch to
-
-			if (e.ctrlKey) {
-				// Ctrl+arrow moves focus from panel content to the open
-				// tab/accordian header.
-			}
-			else {
-				var curNdx = this.$tabs.index($tab);
-
-				if (curNdx == 0) {
-					// tab is the first one:
-					// set newTab to last tab
-					$newTab = this.$tabs.last();
-				}
-				else {
-					// set newTab to previous
-					$newTab = this.$tabs.eq(curNdx - 1);
-				}
-
-				// switch to the new tab
-				this.switchTabs($tab, $newTab);
-			}
-
-			e.stopPropagation();
-			return false;
-		}
-		case this.keys.right:
-		case this.keys.down:
-		{
-
-			var thisObj = this;
-			var foundTab = false; // set to true when current tab found in array
-			var $newTab; // the new tab to switch to
-
-			var curNdx = this.$tabs.index($tab);
-
-			if (curNdx == this.$tabs.last().index()) {
-				// tab is the last one:
-				// set newTab to first tab
-				$newTab = this.$tabs.first();
-			}
-			else {
-				// set newTab to next tab
-				$newTab = this.$tabs.eq(curNdx + 1);
-			}
-
-			// switch to the new tab
-			this.switchTabs($tab, $newTab);
-
-			e.stopPropagation();
-			return false;
-		}
-		case this.keys.home:
-		{
-
-			// switch to the first tab
-			this.switchTabs($tab, this.$tabs.first());
-
-			e.stopPropagation();
-			return false;
-		}
-		case this.keys.end:
-		{
-
-			// switch to the last tab
-			this.switchTabs($tab, this.$tabs.last());
-
-			e.stopPropagation();
-			return false;
-		}
-	}
-} // end handleTabKeyDown()
-
-
-tabpanel.prototype.handleTabKeyPress = function ($tab, e) {
-
-	if (e.altKey) {
-		// do nothing
-		return true;
-	}
-
-	switch (e.keyCode) {
-		case this.keys.enter:
-		case this.keys.space:
-		case this.keys.left:
-		case this.keys.up:
-		case this.keys.right:
-		case this.keys.down:
-		case this.keys.home:
-		case this.keys.end:
-		{
-			e.stopPropagation();
-			return false;
-		}
-		case this.keys.pageup:
-		case this.keys.pagedown:
-		{
-			if (!e.ctrlKey) {
-				return true;
-			}
-
-			e.stopPropagation();
-			return false;
-		}
-	}
-
-	return true;
-
-} // end handleTabKeyPress()
-
-tabpanel.prototype.handleTabClick = function ($tab, e) {
-
-	// Remove the highlighting from all tabs
-	this.$tabs.removeClass('selected');
-
-	// remove all tabs from the tab order
-	this.$tabs.attr('tabindex', '-1');
-
-	// hide all tab panels
-	this.$panels.hide();
-
-	// Highlight the clicked tab
-	$tab.addClass('selected');
-
-	// show the clicked tab panel
-	this.$panel.find('#' + $tab.attr('aria-controls')).show();
-
-	// make clicked tab navigable
-	$tab.attr('tabindex', '0');
-
-	// give the tab focus
-	$tab.focus();
-
-	return true;
-
-} // end handleTabClick()
-
-tabpanel.prototype.handleTabFocus = function ($tab, e) {
-
-	// Add the focus class to the tab
-	$tab.addClass('focus');
-
-	return true;
-
-} // end handleTabFocus()
-tabpanel.prototype.handleTabBlur = function ($tab, e) {
-
-	// Remove the focus class to the tab
-	$tab.removeClass('focus');
-
-	return true;
-
-} // end handleTabBlur()
-
-
-/////////////////////////////////////////////////////////
-// Panel Event handlers
-
-tabpanel.prototype.handlePanelKeyDown = function ($elem, e) {
-
-	if (e.altKey) {
-		// do nothing
-		return true;
-	}
-
-	switch (e.keyCode) {
-		case this.keys.esc:
-		{
-			e.stopPropagation();
-			return false;
-		}
-		case this.keys.left:
-		case this.keys.up:
-		{
-
-			if (!e.ctrlKey) {
-				// do not process
-				return true;
-			}
-
-			// get the jQuery object of the tab
-			var $tab = $('#' + $elem.attr('aria-labeledby'));
-
-			// Move focus to the tab
-			$tab.focus();
-
-			e.stopPropagation();
-			return false;
-		}
-		case this.keys.pageup:
-		{
-
-			var $newTab;
-
-			if (!e.ctrlKey) {
-				// do not process
-				return true;
-			}
-
-			// get the jQuery object of the tab
-			var $tab = this.$tabs.filter('.selected');
-
-			// get the index of the tab in the tab list
-			var curNdx = this.$tabs.index($tab);
-
-			if (curNdx == 0) {
-				// this is the first tab, set focus on the last one
-				$newTab = this.$tabs.last();
-			}
-			else {
-				// set focus on the previous tab
-				$newTab = this.$tabs.eq(curNdx - 1);
-			}
-
-			// switch to the new tab
-			this.switchTabs($tab, $newTab);
-
-			e.stopPropagation();
-			e.preventDefault();
-			return false;
-		}
-		case this.keys.pagedown:
-		{
-
-			var $newTab;
-
-			if (!e.ctrlKey) {
-				// do not process
-				return true;
-			}
-
-			// get the jQuery object of the tab
-			var $tab = $('#' + $elem.attr('aria-labeledby'));
-
-			// get the index of the tab in the tab list
-			var curNdx = this.$tabs.index($tab);
-
-			if (curNdx == this.$tabs.last().index()) {
-				// this is the last tab, set focus on the first one
-				$newTab = this.$tabs.first();
-			}
-			else {
-				// set focus on the next tab
-				$newTab = this.$tabs.eq(curNdx + 1);
-			}
-
-			// switch to the new tab
-			this.switchTabs($tab, $newTab);
-
-			e.stopPropagation();
-			e.preventDefault();
-			return false;
-		}
-	}
-
-	return true;
-
-} // end handlePanelKeyDown()
-
-tabpanel.prototype.handlePanelKeyPress = function ($elem, e) {
-
-	if (e.altKey) {
-		// do nothing
-		return true;
-	}
-
-	if (e.ctrlKey && (e.keyCode == this.keys.pageup || e.keyCode == this.keys.pagedown)) {
-		e.stopPropagation();
-		e.preventDefault();
-		return false;
-	}
-
-	switch (e.keyCode) {
-		case this.keys.esc:
-		{
-			e.stopPropagation();
-			e.preventDefault();
-			return false;
-		}
-	}
-
-	return true;
-
-} // end handlePanelKeyPress()
-
-$.extend($.expr[':'], {
-	focusable: function (element) {
-		var nodeName = element.nodeName.toLowerCase();
-		var tabIndex = $(element).attr('tabindex');
-
-		// the element and all of its ancestors must be visible
-		if (($(element)[nodeName == 'area' ? 'parents' : 'closest'](':hidden').length) == true) {
-			return false;
-		}
-
-		// If tabindex is defined, its value must be greater than 0
-		if (!isNaN(tabIndex) && tabIndex < 0) {
-			return false;
-		}
-
-		// if the element is a standard form control, it must not be disabled
-		if (/input|select|textarea|button|object/.test(nodeName) == true) {
-
-			return !element.disabled;
-		}
-
-		// if the element is a link, href must be defined
-		if ((nodeName == 'a' || nodeName == 'area') == true) {
-
-			return (element.href.length > 0);
-		}
-
-		// this is some other page element that is not normally focusable.
-		return false;
-	}
-});
-</script>
