@@ -1,5 +1,12 @@
-(function (Swipe) {
-
+(function (root, factory) {
+    if (typeof define === "function" && define.amd) {
+        define(["swipe", "underscore"], factory);
+    } else if (typeof exports === "object") {
+        module.exports = factory(require("swipe"));
+    } else {
+        root.SwipeTabPanel = factory(root.Swipe);
+    }
+}(this, function (Swipe) {
 
     var SwipeTabPanel = function (sel_container, options) {
         this.init(sel_container);
@@ -14,16 +21,18 @@
             this.el_viewport = dom.getElAll(sel_container + ' > .swipe-viewport')[0];
             this.panels = dom.getElAll(sel_container + ' .swipe-panels')[0].children;
 
-            var navHtml = '<button class="prev">Prev</button><button class="next">Next</button>';
+            var panel, baseId, panelId, tabId, navHtml = '<a href="#" class="prev" aria-hidden="true" tabindex="-1">Prev</a><a href="#" class="next" aria-hidden="true" tabindex="-1">Next</a>';
 
             navHtml += '<ul class="paging" role="tablist">';
             for (var i = 0; i < this.panels.length; i++) {
-                var panel = this.panels[i], baseId = this.el_container.id, tabId = baseId + '_tab_' + i, panelId = baseId + '_panel_' + i;
+
+                panel = this.panels[i], baseId = this.el_container.id, tabId = baseId + '_tab_' + i, panelId = baseId + '_panel_' + i;
+
                 panel.setAttribute('id', panelId);
                 panel.setAttribute('aria-labeledby', tabId);
                 panel.setAttribute('role', 'tabpanel');
 
-                navHtml += '<li role="presentation"><a id="' + tabId + '" href="#' + panelId + '" role="tab" aria-controls="' + panelId + '" aria-selected="true">' + i + '</a></li>';
+                navHtml += '<li role="presentation"><a id="' + tabId + '" href="#' + panelId + '" role="tab" aria-controls="' + panelId + '">' + i + '</a></li>';
             }
             navHtml += '</ul>';
 
@@ -34,18 +43,23 @@
 
             this.tabs = dom.getElAll(sel_container + ' .paging a');
 
-            this.swipe = Swipe(this.el_viewport, {
-                startSlide: 0,
-                auto: 0,
-                continuous: false,
-                disableScroll: true,
-                stopPropagation: true,
-                callback: function (index, element) {
-                    _this.refresh(true);
-                },
-                transitionEnd: function (index, element) {
-                }
-            });
+            if (Swipe) {
+                this.swipe = Swipe(this.el_viewport, {
+                    startSlide: 0,
+                    auto: 0,
+                    continuous: false,
+                    disableScroll: true,
+                    stopPropagation: true,
+                    callback: function (index, element) {
+                        _this.currentPos = index;
+                        _this.refresh(true);
+                    },
+                    transitionEnd: function (index, element) {
+                    }
+                });
+            } else {
+                dom.addClass(this.el_viewport, 'no-transition');
+            }
 
             this.el_navContainer.querySelector('.prev').addEventListener('click', function (e) {
                 _this.prev();
@@ -57,31 +71,50 @@
             });
 
             this.bindHandlers();
+
+            this.currentPos = 0;
+            this.numPanels = this.panels.length;
+
             this.refresh(false);
         },
 
         getPanel: function (tab) {
-            return dom.getEl('#' + tab.getAttribute('aria-controls'));
+            return dom.getElById('' + tab.getAttribute('aria-controls'));
         },
         getTab: function (panel) {
-            return dom.getEl('#' + panel.getAttribute('aria-labeledby'));
+            return dom.getElById('' + panel.getAttribute('aria-labeledby'));
         },
 
         prev: function () {
-            this.swipe.prev();
+            if (this.swipe) {
+                this.swipe.prev();
+            } else {
+                this.currentPos = (--this.currentPos > 0) ? this.currentPos : 0;
+                this.refresh(true);
+            }
         },
         next: function () {
-            this.swipe.next();
+            if (this.swipe) {
+                this.swipe.next();
+            } else {
+                this.currentPos = (++this.currentPos < this.numPanels) ? this.currentPos : this.numPanels - 1;
+                this.refresh(true);
+            }
         },
         showPanel: function (index) {
-            this.swipe.slide(index);
+            if (this.swipe) {
+                this.swipe.slide(index);
+            } else {
+                this.currentPos = index;
+                this.refresh(true);
+            }
         },
 
         bindHandlers: function () {
             var _this = this;
 
             for (var i = 0, l = this.tabs.length; i < l; i++) {
-                var tab = this.tabs[i], panel = dom.getEl('#' + tab.getAttribute('aria-controls'));
+                var tab = this.tabs[i], panel = dom.getElById(tab.getAttribute('aria-controls'));
 
                 tab.addEventListener('click', _this.handleTabClick.bind(_this));
 
@@ -140,7 +173,7 @@
                 {
 
                     // switch to the last tab
-                    this.showPanel(this.swipe.getNumSlides() - 1);
+                    this.showPanel(this.numPanels - 1);
 
                     e.stopPropagation();
                     return false;
@@ -268,14 +301,22 @@
 
 
         refresh: function (doFocusTab) {
-            var current = this.swipe.getPos();
+            var current = this.currentPos;
+
             for (var i = 0, l = this.panels.length; i < l; i++) {
                 var panel = this.panels[i], tab = this.getTab(panel);
+
                 if (current === i) {
+                    if (!this.swipe) {
+                        panel.style.display = 'block';
+                    }
+
                     panel.setAttribute('aria-hidden', 'false');
                     panel.removeAttribute('tabindex');
                     dom.addClass(panel, 'selected');
+
                     tab.removeAttribute('tabindex');
+                    tab.setAttribute('aria-selected', 'true');
 
                     var panelLinks = dom.getElAll('a, input, button, select, textarea, iframe', panel);
                     for (var j = 0, jl = panelLinks.length; j < jl; j++) {
@@ -285,22 +326,30 @@
                     if (doFocusTab) {
                         tab.focus();
                     }
+
                 } else {
+                    if (!this.swipe) {
+                        panel.style.display = 'none';
+                    }
+
                     panel.setAttribute('aria-hidden', 'true');
                     panel.setAttribute('tabindex', '-1');
                     dom.removeClass(panel, 'selected');
+
                     tab.setAttribute('tabindex', '-1');
+                    tab.removeAttribute('aria-selected');
 
                     var panelLinks = dom.getElAll('a, input, button, select, textarea, iframe', panel);
                     for (var j = 0, jl = panelLinks.length; j < jl; j++) {
                         panelLinks[j].setAttribute('tabindex', '-1');
                     }
+
+
                 }
 
             }
         }
     };
-
 
 
     var KEYS = {
@@ -331,9 +380,13 @@
             getElAll: function (selector, context) {
                 return context ? context.querySelectorAll(selector) : document.querySelectorAll(selector);
             },
+            getElById: function (id) {
+                return document.getElementById(id);
+            },
 
             getElIndex: function (el) {
                 var list = el.parentNode.children, index = -1;
+
 
                 for (var i = 0; i < list.length; ++i) {
                     var item = list[i];
@@ -366,49 +419,11 @@
                     }
                     elem.className = newClass.replace(/^\s+|\s+$/g, '');
                 }
-            },
-            toggleClass: function (elem, className) {
-                var newClass = ' ' + elem.className.replace(/[\t\r\n]/g, ' ') + ' ';
-                if (this.hasClass(elem, className)) {
-                    while (newClass.indexOf(' ' + className + ' ') >= 0) {
-                        newClass = newClass.replace(' ' + className + ' ', ' ');
-                    }
-                    elem.className = newClass.replace(/^\s+|\s+$/g, '');
-                } else {
-                    elem.className += ' ' + className;
-                }
             }
         };
     })();
 
-    // Polyfill bind
-    if (!Function.prototype.bind) {
-        Function.prototype.bind = function (oThis) {
-            if (typeof this !== "function") {
-                // closest thing possible to the ECMAScript 5
-                // internal IsCallable function
-                throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
-            }
+    new SwipeTabPanel('#mySwipe');
 
-            var aArgs = Array.prototype.slice.call(arguments, 1),
-                fToBind = this,
-                fNOP = function () {
-                },
-                fBound = function () {
-                    return fToBind.apply(this instanceof fNOP && oThis
-                            ? this
-                            : oThis,
-                        aArgs.concat(Array.prototype.slice.call(arguments)));
-                };
-
-            fNOP.prototype = this.prototype;
-            fBound.prototype = new fNOP();
-
-            return fBound;
-        };
-    }
-
-    return new SwipeTabPanel('#mySwipe');
-
-})(Swipe);
+}));
 
