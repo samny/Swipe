@@ -21,9 +21,9 @@
             this.el_viewport = this.el_container.find('.swipe-viewport');
             this.panels = this.el_container.find('.swipe-panels > *');
 
-            var panel, baseId, panelId, tabId, navHtml = '<a href="#" class="prev" aria-hidden="true" tabindex="-1">Prev</a><a href="#" class="next" aria-hidden="true" tabindex="-1">Next</a>';
+            var panel, baseId, panelId, tabId, navHtml = '<div><a href="#" class="prev" aria-hidden="true" tabindex="-1">Prev</a><a href="#" class="next" aria-hidden="true" tabindex="-1">Next</a>';
 
-            navHtml += '<div><ul class="paging" role="tablist">';
+            navHtml += '<ul class="paging" role="tablist">';
 
             this.panels.each(function (i, el) {
                 panel = $(el), baseId = _this.el_container.attr('id'), tabId = baseId + '_tab_' + i, panelId = baseId + '_panel_' + i;
@@ -51,8 +51,6 @@
                     callback: function (index, element) {
                         _this.currentPos = index;
                         _this.refresh(true);
-                    },
-                    transitionEnd: function (index, element) {
                     }
                 });
             } else {
@@ -77,10 +75,10 @@
         },
 
         getPanel: function (tab) {
-            return $('#' + tab.attr('aria-controls'));
+            return $('#' + $(tab).attr('aria-controls'));
         },
         getTab: function (panel) {
-            return $('#' + panel.attr('aria-labeledby'));
+            return $('#' + $(panel).attr('aria-labeledby'));
         },
 
         prev: function () {
@@ -353,7 +351,7 @@
         down: 40
     };
 
-    new SwipeTabPanel('#mySwipe');
+    return SwipeTabPanel;
 
 }));
 
