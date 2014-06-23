@@ -1,12 +1,12 @@
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
-        define(["swipe", "underscore"], factory);
+        define(["swipe", "jquery"], factory);
     } else if (typeof exports === "object") {
-        module.exports = factory(require("swipe"));
+        module.exports = factory(require("swipe"), require("jquery"));
     } else {
-        root.SwipeTabPanel = factory(root.Swipe);
+        root.SwipeTabPanel = factory(root.Swipe, root.jQuery);
     }
-}(this, function (Swipe) {
+}(this, function (Swipe, $) {
 
     var SwipeTabPanel = function (sel_container, options) {
         this.init(sel_container);
@@ -17,34 +17,32 @@
             var _this = this;
 
             this.sel_container = sel_container;
-            this.el_container = dom.getElAll(this.sel_container)[0];
-            this.el_viewport = dom.getElAll(sel_container + ' > .swipe-viewport')[0];
-            this.panels = dom.getElAll(sel_container + ' .swipe-panels')[0].children;
+            this.el_container = $(this.sel_container);
+            this.el_viewport = this.el_container.find('.swipe-viewport');
+            this.panels = this.el_container.find('.swipe-panels > *');
 
             var panel, baseId, panelId, tabId, navHtml = '<a href="#" class="prev" aria-hidden="true" tabindex="-1">Prev</a><a href="#" class="next" aria-hidden="true" tabindex="-1">Next</a>';
 
-            navHtml += '<ul class="paging" role="tablist">';
-            for (var i = 0; i < this.panels.length; i++) {
+            navHtml += '<div><ul class="paging" role="tablist">';
 
-                panel = this.panels[i], baseId = this.el_container.id, tabId = baseId + '_tab_' + i, panelId = baseId + '_panel_' + i;
-
-                panel.setAttribute('id', panelId);
-                panel.setAttribute('aria-labeledby', tabId);
-                panel.setAttribute('role', 'tabpanel');
+            this.panels.each(function (i, el) {
+                panel = $(el), baseId = _this.el_container.attr('id'), tabId = baseId + '_tab_' + i, panelId = baseId + '_panel_' + i;
+                panel.attr('id', panelId);
+                panel.attr('aria-labeledby', tabId);
+                panel.attr('role', 'tabpanel');
 
                 navHtml += '<li role="presentation"><a id="' + tabId + '" href="#' + panelId + '" role="tab" aria-controls="' + panelId + '">' + i + '</a></li>';
-            }
-            navHtml += '</ul>';
+            });
+            navHtml += '</ul></div>';
 
-            this.el_navContainer = dom.createEl('DIV');
-            this.el_navContainer.innerHTML = navHtml;
-            this.el_container.appendChild(this.el_navContainer);
-            this.el_container.insertBefore(this.el_navContainer, this.el_container.firstChild);
+            this.el_navContainer = $(navHtml);
+            this.el_container.append(this.el_navContainer);
+            this.el_container.prepend(this.el_navContainer);
 
-            this.tabs = dom.getElAll(sel_container + ' .paging a');
+            this.tabs = $(sel_container + ' .paging a');
 
             if (Swipe) {
-                this.swipe = Swipe(this.el_viewport, {
+                this.swipe = Swipe(this.el_viewport.get(0), {
                     startSlide: 0,
                     auto: 0,
                     continuous: false,
@@ -58,14 +56,14 @@
                     }
                 });
             } else {
-                dom.addClass(this.el_viewport, 'no-transition');
+                this.el_viewport.addClass('no-transition');
             }
 
-            this.el_navContainer.querySelector('.prev').addEventListener('click', function (e) {
+            this.el_navContainer.find('.prev').on('click', function (e) {
                 _this.prev();
                 e.preventDefault();
             });
-            this.el_navContainer.querySelector('.next').addEventListener('click', function (e) {
+            this.el_navContainer.find('.next').on('click', function (e) {
                 _this.next();
                 e.preventDefault();
             });
@@ -79,10 +77,10 @@
         },
 
         getPanel: function (tab) {
-            return dom.getElById('' + tab.getAttribute('aria-controls'));
+            return $('#' + tab.attr('aria-controls'));
         },
         getTab: function (panel) {
-            return dom.getElById('' + panel.getAttribute('aria-labeledby'));
+            return $('#' + panel.attr('aria-labeledby'));
         },
 
         prev: function () {
@@ -113,18 +111,13 @@
         bindHandlers: function () {
             var _this = this;
 
-            for (var i = 0, l = this.tabs.length; i < l; i++) {
-                var tab = this.tabs[i], panel = dom.getElById(tab.getAttribute('aria-controls'));
-
-                tab.addEventListener('click', _this.handleTabClick.bind(_this));
-
-                tab.addEventListener('keydown', _this.handleTabKeyDown.bind(_this));
-                tab.addEventListener('keypress', _this.handleTabKeyPress.bind(_this));
-                tab.addEventListener('focus', _this.handleTabFocus.bind(_this));
-                tab.addEventListener('blur', _this.handleTabBlur.bind(_this));
-                panel.addEventListener('keydown', _this.handlePanelKeyDown.bind(_this));
-                panel.addEventListener('keypress', _this.handlePanelKeyPress.bind(_this));
-            }
+            this.tabs.on('click', _this.handleTabClick.bind(_this));
+            this.tabs.on('keydown', $.proxy(_this.handleTabKeyDown, _this));
+            this.tabs.on('keypress', $.proxy(_this.handleTabKeyPress, _this));
+            this.tabs.on('focus', $.proxy(_this.handleTabFocus, _this));
+            this.tabs.on('blur', $.proxy(_this.handleTabBlur, _this));
+            this.panels.on('keydown', $.proxy(_this.handlePanelKeyDown, _this));
+            this.panels.on('keypress', $.proxy(_this.handlePanelKeyPress, _this));
         },
 
         handleTabKeyDown: function (e) {
@@ -216,14 +209,14 @@
         handleTabClick: function (e) {
 
             e.preventDefault();
-            var tab = e.target, panel = this.getPanel(tab), panelIndex;
-            this.showPanel(dom.getElIndex(panel));
+            var tab = e.target, panel = this.getPanel(tab);
+            this.showPanel(panel.index());
         },
         handleTabFocus: function (e) {
-            dom.addClass(e.target, 'focus');
+            $(e.target).addClass('focus');
         },
         handleTabBlur: function (e) {
-            dom.removeClass(e.target, 'focus');
+            $(e.target).removeClass('focus');
         },
         handlePanelKeyDown: function (e) {
             if (e.altKey) {
@@ -301,53 +294,46 @@
 
 
         refresh: function (doFocusTab) {
-            var current = this.currentPos;
+            var _this = this, current = this.currentPos;
 
-            for (var i = 0, l = this.panels.length; i < l; i++) {
-                var panel = this.panels[i], tab = this.getTab(panel);
+            this.panels.each(function (i, el) {
+                var panel = $(el), tab = _this.getTab(panel);
 
                 if (current === i) {
-                    if (!this.swipe) {
-                        panel.style.display = 'block';
+                    if (!_this.swipe) {
+                        panel.css('display', 'block');
                     }
 
-                    panel.setAttribute('aria-hidden', 'false');
-                    panel.removeAttribute('tabindex');
-                    dom.addClass(panel, 'selected');
+                    panel.attr('aria-hidden', 'false');
+                    panel.removeAttr('tabindex');
+                    panel.addClass('selected');
 
-                    tab.removeAttribute('tabindex');
-                    tab.setAttribute('aria-selected', 'true');
+                    tab.removeAttr('tabindex');
+                    tab.attr('aria-selected', 'true');
 
-                    var panelLinks = dom.getElAll('a, input, button, select, textarea, iframe', panel);
-                    for (var j = 0, jl = panelLinks.length; j < jl; j++) {
-                        panelLinks[j].removeAttribute('tabindex');
-                    }
+                    var panelLinks = panel.find('a, input, button, select, textarea, iframe');
+                    panelLinks.removeAttr('tabindex');
 
                     if (doFocusTab) {
                         tab.focus();
                     }
 
                 } else {
-                    if (!this.swipe) {
-                        panel.style.display = 'none';
+                    if (!_this.swipe) {
+                        panel.css('display', 'none');
                     }
 
-                    panel.setAttribute('aria-hidden', 'true');
-                    panel.setAttribute('tabindex', '-1');
-                    dom.removeClass(panel, 'selected');
+                    panel.attr('aria-hidden', 'true');
+                    panel.attr('tabindex', '-1');
+                    panel.removeClass('selected');
 
-                    tab.setAttribute('tabindex', '-1');
-                    tab.removeAttribute('aria-selected');
+                    tab.attr('tabindex', '-1');
+                    tab.removeAttr('aria-selected');
 
-                    var panelLinks = dom.getElAll('a, input, button, select, textarea, iframe', panel);
-                    for (var j = 0, jl = panelLinks.length; j < jl; j++) {
-                        panelLinks[j].setAttribute('tabindex', '-1');
-                    }
-
-
+                    var panelLinks = panel.find('a, input, button, select, textarea, iframe');
+                    panelLinks.attr('tabindex', '-1');
                 }
-
-            }
+            });
         }
     };
 
@@ -366,62 +352,6 @@
         right: 39,
         down: 40
     };
-
-    // DOM helpers
-    var dom = (function () {
-
-        return {
-            createEl: function (tagname) {
-                return document.createElement(tagname);
-            },
-            getEl: function (selector, context) {
-                return context ? context.querySelector(selector) : document.querySelector(selector);
-            },
-            getElAll: function (selector, context) {
-                return context ? context.querySelectorAll(selector) : document.querySelectorAll(selector);
-            },
-            getElById: function (id) {
-                return document.getElementById(id);
-            },
-
-            getElIndex: function (el) {
-                var list = el.parentNode.children, index = -1;
-
-
-                for (var i = 0; i < list.length; ++i) {
-                    var item = list[i];
-                    if (item === el) {
-                        index = i;
-                        break;
-                    }
-                }
-                return index;
-            },
-            hasClass: function (el, selector) {
-                var className = " " + selector + " ";
-
-                if ((" " + el.className + " ").replace(/[\n\t]/g, " ").indexOf(className) > -1) {
-                    return true;
-                }
-            },
-
-            addClass: function (elem, className) {
-                if (!this.hasClass(elem, className)) {
-                    elem.className += ' ' + className;
-                }
-            },
-
-            removeClass: function (elem, className) {
-                var newClass = ' ' + elem.className.replace(/[\t\r\n]/g, ' ') + ' ';
-                if (this.hasClass(elem, className)) {
-                    while (newClass.indexOf(' ' + className + ' ') >= 0) {
-                        newClass = newClass.replace(' ' + className + ' ', ' ');
-                    }
-                    elem.className = newClass.replace(/^\s+|\s+$/g, '');
-                }
-            }
-        };
-    })();
 
     new SwipeTabPanel('#mySwipe');
 
