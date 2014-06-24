@@ -36,7 +36,6 @@
             navHtml += '</ul></div>';
 
             this.el_navContainer = $(navHtml);
-            this.el_container.append(this.el_navContainer);
             this.el_container.prepend(this.el_navContainer);
 
             this.tabs = $(sel_container + ' .paging a');
@@ -332,6 +331,26 @@
                     panelLinks.attr('tabindex', '-1');
                 }
             });
+        },
+        destroy: function(){
+            if(this.swipe){
+                this.swipe.kill();
+            }
+            this.panels.find('a, input, button, select, textarea, iframe').removeAttr('tabindex');,
+            this.panels
+                .off()
+                .removeClass('selected')
+                .removeAttr('style')
+                .removeAttr('aria-hidden')
+                .removeAttr('id')
+                .removeAttr('aria-labeledby')
+                .removeAttr('role');
+
+            this.tab.off();
+
+            this.el_viewport.removeClass('no-transition');
+
+            this.el_navContainer.remove();
         }
     };
 
